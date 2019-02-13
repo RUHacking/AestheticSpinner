@@ -1,0 +1,111 @@
+<body>
+  <script src="js/three.min.js"></script>
+  <script src="js/objloader.js"></script>
+  <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: -1;
+      }
+  </style>
+
+  <script>
+    var camera, scene, renderer;
+    var geometry, material, mesh, group;
+    var meshes, lights = [];
+
+    init();
+    function init() {
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 50 );
+      camera.position.z = 30;
+      renderer = new THREE.WebGLRenderer( { antialias: true } );
+     
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xd1161f, 1);
+
+      var canvas = renderer.domElement;
+      canvas.style.display = 'block';
+
+      document.body.appendChild(canvas);
+
+      lights[0] = new THREE.PointLight(0xffffff, 1, 0);
+
+      lights[0].position.set(10,10,0);
+
+      scene.add(...lights, new THREE.AmbientLight(0xffffff));
+    }
+    function addLogo(logo) {
+        group = new THREE.Group();
+
+        logo.scale.set(25,25,25);
+        logo.children[0].material = new THREE.MeshStandardMaterial({
+          flatShading: THREE.FlatShading,
+          side: THREE.DoubleSide,
+        });
+        var box = new THREE.Box3().setFromObject( logo );
+        box.getCenter(logo.position);
+        logo.position.multiplyScalar(-1);
+        group.rotateX(-Math.PI/2);
+        group.rotateY(-Math.PI);
+
+        scene.add(group);
+        group.add(logo);
+
+
+        // FLoor
+        var geo = new THREE.CircleGeometry(9, 32);
+        var mat = new THREE.MeshStandardMaterial({
+          color: 0xd1161f,
+        });
+        let floor = new THREE.Mesh(geo, mat);
+        floor.position = group.position;
+        floor.position.y = -7;
+        floor.rotateX(-Math.PI/2);
+        scene.add(floor);
+
+        animate();
+    }
+    let tickerBOI = 0.0;
+    function animate() {
+      tickerBOI+=1;
+      tickerBOI %= 360;
+      group.rotation.z += 0.01;
+      group.position.y = Math.sin(tickerBOI*(Math.PI/180));
+      renderer.render( scene, camera );
+
+      requestAnimationFrame( animate );
+    }
+
+    function resize(){
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+    window.addEventListener("resize", resize, false);
+    // Function called when download progresses
+    var onProgress = function (xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    };
+
+    // Function called when download errors
+    var onError = function (xhr) {
+      console.log('An error happened');
+    };
+
+
+    var loader = new THREE.OBJLoader();
+    loader.load('ruh.obj', addLogo, onProgress, onError);
+  </script>
+</body>
